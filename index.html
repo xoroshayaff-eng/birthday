@@ -298,7 +298,7 @@ h3.title{font-size:2.3rem;color:var(--pink-deep);font-weight:700;margin-bottom:.
         <div class="ph"><b data-i="ph_place">Фото ресторана</b><code>img/zoloto-1.jpg</code></div>
         <img src="img/zoloto-1.jpg" alt="Ресторан Золото" onerror="this.remove()">
       </div>
-      <figcaption>Золото</figcaption>
+      <figcaption data-i="cap1">Мейрамхана</figcaption>
     </figure>
   </section>
 
@@ -308,7 +308,7 @@ h3.title{font-size:2.3rem;color:var(--pink-deep);font-weight:700;margin-bottom:.
         <div class="ph"><b data-i="ph_place2">Фото интерьера</b><code>img/zoloto-2.jpg</code></div>
         <img src="img/zoloto-2.jpg" alt="Интерьер ресторана Золото" onerror="this.remove()">
       </div>
-      <figcaption>Золото</figcaption>
+      <figcaption data-i="cap2">Интерьер</figcaption>
     </figure>
   </section>
 
@@ -318,7 +318,7 @@ h3.title{font-size:2.3rem;color:var(--pink-deep);font-weight:700;margin-bottom:.
         <div class="ph"><b data-i="ph_place3">Фото блюд</b><code>img/zoloto-3.jpg</code></div>
         <img src="img/zoloto-3.jpg" alt="Блюда ресторана Золото" onerror="this.remove()">
       </div>
-      <figcaption>Золото</figcaption>
+      <figcaption data-i="cap3">Тағамдар</figcaption>
     </figure>
   </section>
 
@@ -379,6 +379,7 @@ const T = {
     place:"Ресторан «Золото»",
     place_desc:"Собираемся на ужин: вкусная еда, тосты, музыка и хорошая компания.",
     ph_photo:"Фото Ажар", ph_place:"Фото ресторана", ph_place2:"Фото интерьера", ph_place3:"Фото блюд", ph_me:"Фото Ажар без фона",
+    cap1:"Ресторан", cap2:"Интерьер", cap3:"Блюда",
     month_title:"Март 2027",
     when:"22 марта 2027, 18:00",
     rsvp_title:"Жду ваш ответ",
@@ -401,6 +402,7 @@ const T = {
     place:"«Золото» мейрамханасы",
     place_desc:"Кешкі асқа жиналамыз: дәмді тағам, тосттар, музыка және жақсы компания.",
     ph_photo:"Ажардың фотосы", ph_place:"Мейрамхана фотосы", ph_place2:"Интерьер фотосы", ph_place3:"Тағамдар фотосы", ph_me:"Ажардың фонсыз фотосы",
+    cap1:"Мейрамхана", cap2:"Интерьер", cap3:"Тағамдар",
     month_title:"Наурыз 2027",
     when:"2027 жылғы 22 наурыз, 18:00",
     rsvp_title:"Жауабыңызды күтемін",
@@ -487,46 +489,22 @@ window.addEventListener("load",()=>{
   setTimeout(()=>first.classList.add("in"),150);
 });
 
-/* ====== МУЗЫКА: «Happy Birthday» через Web Audio ====== */
-let ctx=null, playing=false, timer=null, master=null;
-// [нота в полутонах от До4, длительность в долях]
-const MELODY = [
-  [7,.75],[7,.25],[9,1],[7,1],[12,1],[11,2],
-  [7,.75],[7,.25],[9,1],[7,1],[14,1],[12,2],
-  [7,.75],[7,.25],[19,1],[16,1],[12,1],[11,1],[9,1.5],
-  [17,.75],[17,.25],[16,1],[12,1],[14,1],[12,2.5]
-];
-const BEAT = .46;
-function freq(n){ return 261.63*Math.pow(2,n/12); }
-function playMelody(){
-  if(!playing) return;
-  let t = ctx.currentTime + .1;
-  MELODY.forEach(([n,len])=>{
-    const dur = len*BEAT;
-    [[1,.22],[2,.06]].forEach(([mul,vol])=>{
-      const o = ctx.createOscillator(), g = ctx.createGain();
-      o.type = "triangle"; o.frequency.value = freq(n)*mul;
-      g.gain.setValueAtTime(0,t);
-      g.gain.linearRampToValueAtTime(vol,t+.02);
-      g.gain.exponentialRampToValueAtTime(.0008,t+dur*.95);
-      o.connect(g); g.connect(master);
-      o.start(t); o.stop(t+dur);
-    });
-    t += dur;
-  });
-  timer = setTimeout(playMelody, (t-ctx.currentTime+1.2)*1000);
+/* ====== МУЗЫКА: файл birthday.mp3 (лежит рядом с index.html) ====== */
+const audio = new Audio("birthday.mp3");
+audio.loop = true;
+audio.preload = "auto";
+let playing = false;
+function updateMusicBtn(){
+  const b = document.getElementById("music");
+  b.setAttribute("aria-pressed", playing);
+  b.textContent = playing ? T[lang].music_off : T[lang].music_on;
 }
 document.getElementById("music").onclick = function(){
-  if(!ctx){
-    const AC = window.AudioContext || window.webkitAudioContext;
-    if(!AC) return;
-    ctx = new AC(); master = ctx.createGain(); master.gain.value = .5; master.connect(ctx.destination);
+  if(!playing){
+    audio.play().then(()=>{ playing = true; updateMusicBtn(); confetti(); }).catch(()=>{});
+  } else {
+    audio.pause(); playing = false; updateMusicBtn();
   }
-  playing = !playing;
-  this.setAttribute("aria-pressed", playing);
-  this.textContent = playing ? T[lang].music_off : T[lang].music_on;
-  if(playing){ ctx.resume(); playMelody(); confetti(); }
-  else { clearTimeout(timer); master.gain.cancelScheduledValues(0); ctx.suspend(); }
 };
 
 /* ====== СЕРДЕЧКИ ПРИ ВКЛЮЧЕНИИ МУЗЫКИ ====== */
